@@ -122,36 +122,90 @@ class LLM:
             time.sleep(2)
 
         return ""
-
+    
     def infer_with_openai_model(self, message):
         """Infer using the OpenAI model"""
-        api_key = os.environ.get("OPENAI_API_KEY").split(":")[0]
+        
+        use_azure = "AZURE_OPENAI_API_KEY" in os.environ    
+        
         model_input = [
             {"role": "system", "content": self.systemRole},
             {"role": "user", "content": message},
         ]
 
         def call_api():
-            client = OpenAI(api_key=api_key)
-            response = client.chat.completions.create(
-                model=self.online_model_name,
-                messages=model_input,
-                temperature=self.temperature,
-            )
-            return response.choices[0].message.content
+            if use_azure:
+                # Azure OpenAI
+                api_key = os.environ["AZURE_OPENAI_API_KEY"]
+                base_url = os.environ["AZURE_OPENAI_ENDPOINT"]
+                api_version = os.environ.get("AZURE_OPENAI_API_VERSION", "2024-02-01")
+                deployment_name = self.online_model_name  # deployment name passed as model_name
 
-        tryCnt = 0
-        while tryCnt < 5:
-            tryCnt += 1
-            try:
-                output = self.run_with_timeout(call_api, timeout=100)
-                if output:
-                    return output
-            except Exception as e:
-                self.logger.print_log(f"API error: {e}")
-            time.sleep(2)
+                client = OpenAI(
+                    api_key=api_key,
+                    base_url=base_url,
+                    default_headers={"api-key": api_key},
+                    api_version=api_version,
+                )
+
+                response = client.chat.completions.create(
+                    engine=deployment_name,
+                    messages=model_input,
+                    temperature=self.temperature,
+                )
+                return response.choices[0].message.content
+            else:
+                api_key = os.environ.get("OPENAI_API_KEY").split(":")[0]
+                client = OpenAI(api_key=api_key)
+                response = client.chat.completions.create(
+                    model=self.online_model_name,
+                    messages=model_input,
+                    temperature=self.temperature,
+                )
+                return response.choices[0].message.content
+
+            tryCnt = 0
+            while tryCnt < 5:
+                tryCnt += 1
+                try:
+                    output = self.run_with_timeout(call_api, timeout=100)
+                    if output:
+                        return output
+                except Exception as e:
+                    self.logger.print_log(f"API error: {e}")
+                time.sleep(2)
 
         return ""
+
+    # def infer_with_openai_model(self, message):
+    #     """Infer using the OpenAI model"""
+    #     api_key = os.environ.get("OPENAI_API_KEY").split(":")[0]
+    #     model_input = [
+    #         {"role": "system", "content": self.systemRole},
+    #         {"role": "user", "content": message},
+    #     ]
+
+    #     def call_api():
+    #         client = OpenAI(api_key=api_key)
+    #         response = client.chat.completions.create(
+    #             model=self.online_model_name,
+    #             messages=model_input,
+    #             temperature=self.temperature,
+    #         )
+    #         return response.choices[0].message.content
+
+    #     tryCnt = 0
+    #     while tryCnt < 5:
+    #         tryCnt += 1
+    #         try:
+    #             output = self.run_with_timeout(call_api, timeout=100)
+    #             if output:
+    #                 return output
+    #         except Exception as e:
+    #             self.logger.print_log(f"API error: {e}")
+    #         time.sleep(2)
+
+    #     return ""
 
     def infer_with_o3_mini_model(self, message):
         """Infer using the o3-mini model"""

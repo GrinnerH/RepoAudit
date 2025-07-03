@@ -1,7 +1,7 @@
 #!/bin/bash
 SCAN_TYPE=$1
-LANGUAGE=Python
-MODEL=claude-3.7
+LANGUAGE=Cpp
+MODEL=gpt-4o
 BUG_TYPE=NPD
 PROJECT=toy
 
