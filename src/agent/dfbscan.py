@@ -541,6 +541,7 @@ class DFBScanAgent(Agent):
 
         # Total number of source values
         total_src_values = len(self.src_values)
+        print("[Debug] total_src_values: ", total_src_values)
 
         # Process each source value in parallel with a progress bar
         with tqdm(
@@ -572,21 +573,24 @@ class DFBScanAgent(Agent):
         for log_file in self.get_log_files():
             self.logger.print_console(log_file)
         return
-
+    
     def __process_src_value(self, src_value: Value) -> None:
         worklist = []
+        # 查找 src_value 所在的函数，即："这个值是在哪个函数里定义/使用的？
         src_function = self.ts_analyzer.get_function_from_localvalue(src_value)
         if src_function is None:
             return
+        # 初始化调用上下文并入队
         initial_context = CallContext(False)
-
         worklist.append((src_value, src_function, initial_context))
+
         while len(worklist) > 0:
             (start_value, start_function, call_context) = worklist.pop(0)
             if len(call_context.context) > self.call_depth:
                 continue
 
-            # Construct the input for intra-procedural data-flow analysis
+            # Construct the input for intra-procedural data-flow analysis 
+            # 构建程序内数据流分析的输入
             sinks_in_function = self.__obtain_extractor().extract_sinks(start_function)
             sink_values = [
                 (sink.name, sink.line_number - start_function.start_line_number + 1)
@@ -608,6 +612,7 @@ class DFBScanAgent(Agent):
                 (ret.name, ret.line_number - start_function.start_line_number + 1)
                 for ret in start_function.retvals
             ]
+            
             input = IntraDataFlowAnalyzerInput(
                 start_function, start_value, sink_values, call_statements, ret_values
             )

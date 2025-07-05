@@ -17,13 +17,15 @@ class MetaScanAgent(Agent):
     This agent is designed to extract meta information from the source code.
     Used for testing llmtools :)
     """
-
-    def __init__(self, project_path, language, ts_analyzer) -> None:
+    # wwh edit 添加model_name和temperature参数
+    def __init__(self, project_path, language, ts_analyzer, model_name, temperature) -> None:
         self.project_path = project_path
         self.project_name = project_path.split("/")[-1]
         self.language = language
         self.ts_analyzer = ts_analyzer
         self.state = MetaScanState()
+        self.model_name = model_name
+        self.temperature = temperature
         return
 
     def start_scan(self) -> None:
@@ -36,7 +38,8 @@ class MetaScanAgent(Agent):
         )
         if not os.path.exists(log_dir_path):
             os.makedirs(log_dir_path)
-        self.logger = Logger(self.log_dir_path + "/" + "metascan.log")
+        # wwh edit: 修改self.log_dir_path参数 为log_dir_path
+        self.logger = Logger(log_dir_path + "/" + "metascan.log")
 
         for function_id in self.ts_analyzer.function_env:
             function_meta_data = {}
