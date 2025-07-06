@@ -575,6 +575,7 @@ class DFBScanAgent(Agent):
         return
     
     def __process_src_value(self, src_value: Value) -> None:
+        self.logger.print_log(f"[Debug] Start processing src_value: {src_value}")
         worklist = []
         # 查找 src_value 所在的函数，即："这个值是在哪个函数里定义/使用的？
         src_function = self.ts_analyzer.get_function_from_localvalue(src_value)
@@ -612,17 +613,19 @@ class DFBScanAgent(Agent):
                 (ret.name, ret.line_number - start_function.start_line_number + 1)
                 for ret in start_function.retvals
             ]
-            
+
             input = IntraDataFlowAnalyzerInput(
                 start_function, start_value, sink_values, call_statements, ret_values
             )
 
             # Invoke the intra-procedural data-flow analysis
+            # 调用过程内数据流分析
             output = self.intra_dfa.invoke(input)
 
             if output is None:
+                self.logger.print_log("[Duebug] output is None in \"__process_src_value\"")
                 continue
-
+            self.logger.print_log(f"[Debug] 'output' returned {len(output.reachable_values)} paths")
             for path_index in range(len(output.reachable_values)):
                 reachable_values_in_single_path = set([])
                 for value in output.reachable_values[path_index]:
@@ -634,6 +637,7 @@ class DFBScanAgent(Agent):
                 delta_worklist = self.__update_worklist(
                     input, output, call_context, path_index
                 )
+                self.logger.print_log(f"[Debug] 'delta_worklist': Updated worklist with {len(delta_worklist)} new entries")
                 worklist.extend(delta_worklist)
 
         # Collect potential buggy paths
@@ -645,6 +649,7 @@ class DFBScanAgent(Agent):
 
         # Validate buggy paths and generate bug reports
         for buggy_path in self.state.potential_buggy_paths[src_value].values():
+            self.logger.print_log(f"[Debug] 'buggy_path': Validating buggy path with {len(buggy_path)} values")
             input = PathValidatorInput(
                 self.bug_type,
                 buggy_path,

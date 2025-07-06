@@ -106,6 +106,9 @@ class IntraDataFlowAnalyzer(LLMTool):
         for ret_val in input.ret_values:
             rets_str += f"- {ret_val[0]} at line {ret_val[1]}\n"
         prompt = prompt.replace("<RETURN_VALUES>", rets_str)
+
+        # wwh edit: 禁止md语法
+        prompt += "\n\nNOTE: Please output in plain text. Do not use Markdown formatting (e.g., no **bold**, no ### headings, no bullet points).\n"
         return prompt
 
     def _parse_response(
@@ -123,8 +126,11 @@ class IntraDataFlowAnalyzer(LLMTool):
         """
         paths = []
 
+        # wwh edit 更新，兼容md语法
+
         # Regex to match a path header line, e.g., "- Path 1: Lines 2 -> 3;"
         path_header_re = re.compile(r"Path\s+(\d+):\s*(.+?);?$")
+        # path_header_re = re.compile(r"Path\s+(\d+):\s*(.+?);?$", re.IGNORECASE)
 
         # Regex to match a propagation detail line, e.g.,
         # "  - Type: Return; Name: getNullObject(); Function: None; Index: 0; Line: 3; Dependency: ..."
@@ -135,6 +141,15 @@ class IntraDataFlowAnalyzer(LLMTool):
             r"Index:\s*([^;]+);\s*"
             r"Line:\s*([^;]+);"
         )
+
+        # detail_re = re.compile(
+        #     r"(?:\*\*)?Type(?:\*\*)?:\s*([^;]+);\s*"
+        #     r"(?:\*\*)?Name(?:\*\*)?:\s*([^;]+);\s*"
+        #     r"(?:\*\*)?Function(?:\*\*)?:\s*([^;]+);\s*"
+        #     r"(?:\*\*)?Index(?:\*\*)?:\s*([^;]+);\s*"
+        #     r"(?:\*\*)?Line(?:\*\*)?:\s*([^;]+);?",
+        #     re.IGNORECASE
+        # )
 
         current_path = None
         for line in response.splitlines():

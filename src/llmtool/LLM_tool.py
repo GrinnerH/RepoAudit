@@ -52,7 +52,8 @@ class LLMTool(ABC):
             return self.cache[input]
 
         prompt = self._get_prompt(input)
-        self.logger.print_log("Prompt:", "\n", prompt)
+        # self.logger.print_log("Prompt:", "\n", prompt)
+        self.logger.print_log("Prompt submitted")
 
         single_query_num = 0
         output = None

@@ -1,9 +1,9 @@
 #!/bin/bash
 SCAN_TYPE=metascan
-LANGUAGE=Python
+LANGUAGE=Cpp
 MODEL=gpt-4o
-BUG_TYPE=NPD
-PROJECT=toy
+BUG_TYPE=MLK
+PROJECT=t_cpp
 
 # For demo/test run
 python3 repoaudit.py \
